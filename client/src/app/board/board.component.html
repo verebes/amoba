@@ -1,3 +1,6 @@
 <div>
   <canvas #board width="500" height="500" ></canvas>
+  <svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
+    <rect #hightlight [attr.x]="rectX" [attr.y]="rectY" width="20" height="20" stroke="black"  fill="transparent" stroke-width="2" />
+  </svg>  
 </div>

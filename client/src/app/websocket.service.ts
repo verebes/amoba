@@ -1,5 +1,5 @@
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs/Rx';
 
 @Injectable()
 export class WebSocketService {
@@ -8,9 +8,9 @@ export class WebSocketService {
     ws = null;
 
     connect(): Observable<any> {
-        this.ws = new WebSocket('ws://' + location.hostname + ':3000');
+        this.ws = new WebSocket('ws://' + location.hostname.substr(location.hostname.indexOf('.') + 1) + ':3000');
 
-        this.observable = new Observable (
+        this.observable = new Observable(
             observer => {
                 this.ws.onmessage = (event) => observer.next(event.data);
                 this.ws.onerror = (event) => observer.error(event);
@@ -28,9 +28,9 @@ export class WebSocketService {
         // };
     }
 
-    sendMessage( msg: any) {
+    sendMessage(msg: any) {
         const msgstr = JSON.stringify(msg);
-        console.log('msg str:' + msgstr );
-        this.ws.send( msgstr );
+        console.log('msg str:' + msgstr);
+        this.ws.send(msgstr);
     }
 }

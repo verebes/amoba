@@ -2,6 +2,19 @@ import { Component, OnInit, ViewChild, AfterViewInit, ElementRef, HostListener }
 import { WebSocketService } from '../websocket.service';
 import { Observable } from 'rxjs/Rx';
 
+interface IPos {
+  cellX: number;
+  cellY: number;
+}
+
+
+interface IResult {
+  win: boolean;
+  from: IPos;
+  to: IPos;
+}
+
+
 @Component({
   selector: 'board',
   templateUrl: './board.component.html',
@@ -13,6 +26,8 @@ export class BoardComponent implements OnInit, AfterViewInit {
   width = 500;
   height = 500;
   red = true;
+  rectX = 0;
+  rectY = 0;
 
 
   @ViewChild('board') canvas: ElementRef;
@@ -31,21 +46,47 @@ export class BoardComponent implements OnInit, AfterViewInit {
   }
 
   onData(data) {
-    interface IPos {
-      cellX: number;
-      cellY: number;
-    }
     if (!data) {
       return;
     }
 
     console.log('data:' + data);
-    if ( data === "\"new\"") {
+
+    const msg: any = JSON.parse(data);
+    if (msg.type === "place") {
+      this.placeOne(msg.msg as IPos);
+    }
+
+    if (msg.type === "new") {
       this.newGame();
       return;
     }
 
-    const d: IPos = JSON.parse(data);
+    if (msg.type === "result") {
+      if  ( msg.msg.won ) {
+        this.endGame(msg.msg as IResult);
+      }
+    }
+
+  }
+
+  endGame(msg: IResult) {
+    console.log('endGame');
+    const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
+
+
+    ctx.lineCap = "round"
+    ctx.lineWidth = 5;
+    ctx.strokeStyle  = 'black';
+
+    ctx.beginPath();
+    ctx.moveTo( ( msg.from.cellX + 0.5 ) * this.cellSize, (msg.from.cellY + 0.5 ) * this.cellSize );
+
+    ctx.lineTo( ( msg.to.cellX + 0.5 ) * this.cellSize, (msg.to.cellY + 0.5 ) * this.cellSize );
+    ctx.stroke();
+  }
+
+  placeOne(d: IPos) {
     console.log("pos:" + d.cellX + ', ' + d.cellY);
     console.log('aaa' + this.cellSize);
 
@@ -53,6 +94,7 @@ export class BoardComponent implements OnInit, AfterViewInit {
 
     const cx = this.cellSize * (d.cellX + 0.5);
     const cy = this.cellSize * (d.cellY + 0.5);
+
 
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
     if (this.red) {
@@ -62,6 +104,9 @@ export class BoardComponent implements OnInit, AfterViewInit {
     }
     this.red = !this.red;
 
+    this.rectX = cx - this.cellSize / 2;
+    this.rectY = cy - this.cellSize / 2;
+
     ctx.beginPath();
     ctx.arc(cx, cy, (this.cellSize - 4) / 2, 0, Math.PI * 2);
     ctx.fill();
@@ -69,9 +114,6 @@ export class BoardComponent implements OnInit, AfterViewInit {
 
   @HostListener('mousedown', ['$event'])
   onclick(event: MouseEvent) {
-    console.log(event.offsetX);
-    console.log(event.offsetY);
-
     const cellX = Math.floor(event.offsetX / this.cellSize);
     const cellY = Math.floor(event.offsetY / this.cellSize);
 
@@ -79,10 +121,11 @@ export class BoardComponent implements OnInit, AfterViewInit {
 
     const msg = {
       cellX: cellX,
-      cellY: cellY
+      cellY: cellY,
+      red: this.red
     };
 
-    this.wss.sendMessage(msg);
+    this.wss.sendMessage({ type: "place", msg: msg });
   }
 
   newGame() {
@@ -94,6 +137,10 @@ export class BoardComponent implements OnInit, AfterViewInit {
     const ctx: CanvasRenderingContext2D = this.canvas.nativeElement.getContext('2d');
 
     ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
+
+    ctx.lineCap = "round"
+    ctx.lineWidth = 1;
+    ctx.strokeStyle  = 'black';
 
     console.log("drawing grid");
 

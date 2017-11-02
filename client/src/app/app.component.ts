@@ -27,6 +27,6 @@ export class AppComponent {
 
   newGame() {
     console.log("new game");
-    this.wss.sendMessage("new");
+    this.wss.sendMessage(  { type: "new", msg: {} });
   }
 }

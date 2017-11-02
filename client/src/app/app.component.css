@@ -7,6 +7,8 @@ div {
 
 button {
     position: absolute;
+    top: auto;
     right: 60px;
     bottom: 60px;
+    left: auto;
 }
